@@ -1,21 +1,39 @@
+from enum import StrEnum
 from pathlib import Path
 
 import typer
 
-from terms import load_terms
+from hymt_translator import HYMTTranslator
 from nllb_translator import NLLBTranslator
+from terms import load_terms
 from translator import Language
 
 app = typer.Typer()
 
 
+class ModelType(StrEnum):
+    NLLB = "nllb"
+    HYMT = "hymt"
+
+
+DEFAULT_MODEL_DIRS = {
+    ModelType.NLLB: Path("./models/nllb-200-distilled-600M"),
+    ModelType.HYMT: Path("./models/HY-MT1.5-1.8B"),
+}
+
+
 @app.command()
 def main(
-    model_dir: Path = typer.Option(
-        Path("./models/nllb-200-distilled-600M"),
+    model_type: ModelType = typer.Option(
+        ModelType.NLLB,
+        "--model",
+        help="번역 모델 선택 (nllb, hymt)",
+    ),
+    model_dir: Path | None = typer.Option(
+        None,
         "--model-dir",
         "-m",
-        help="모델 저장 디렉토리",
+        help="모델 저장 디렉토리 (미지정 시 모델별 기본값 사용)",
     ),
     terms_file: Path = typer.Option(
         Path("./terms.txt"),
@@ -24,7 +42,14 @@ def main(
         help="전문 용어 파일 경로",
     ),
 ):
-    translator = NLLBTranslator(model_dir)
+    if model_dir is None:
+        model_dir = DEFAULT_MODEL_DIRS[model_type]
+
+    if model_type == ModelType.NLLB:
+        translator = NLLBTranslator(model_dir)
+    else:
+        translator = HYMTTranslator(model_dir)
+
     print("모델 로딩 완료!\n")
 
     terms = load_terms(terms_file)
