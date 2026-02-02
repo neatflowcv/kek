@@ -49,10 +49,15 @@ class HYMTTranslator(Translator):
             tokenize=True,
             add_generation_prompt=True,
             return_tensors="pt",
+            return_dict=True,
         )
 
+        input_ids = tokenized["input_ids"].to(self._model.device)
+        attention_mask = tokenized["attention_mask"].to(self._model.device)
+
         outputs = self._model.generate(
-            tokenized.to(self._model.device),
+            input_ids,
+            attention_mask=attention_mask,
             max_new_tokens=256,
             top_k=20,
             top_p=0.6,
@@ -62,5 +67,5 @@ class HYMTTranslator(Translator):
         )
 
         # 입력 토큰 이후의 출력만 디코딩
-        generated_tokens = outputs[0][tokenized.shape[1] :]
+        generated_tokens = outputs[0][input_ids.shape[1] :]
         return self._tokenizer.decode(generated_tokens, skip_special_tokens=True)
