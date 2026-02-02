@@ -24,6 +24,8 @@ lint 실패 시 자동으로 수정할 것.
 
 형식: `type: 한국어 설명`
 
+커밋은 논리적 단위로 최대한 나눠서 할 것.
+
 타입:
 
 - `feat`: 새 기능 추가
@@ -38,7 +40,7 @@ This project uses `uv` as the package manager with Python 3.13.
 
 ```bash
 # Run the application
-uv run python main.py
+uv run main.py
 
 # Install dependencies
 uv sync
