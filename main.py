@@ -1,3 +1,4 @@
+import readline  # noqa: F401 - 한글 입력 시 백스페이스 정상 동작을 위해 필요
 from enum import StrEnum
 from pathlib import Path
 
