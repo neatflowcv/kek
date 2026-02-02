@@ -22,13 +22,18 @@ class HYMTTranslator(Translator):
                 model_dir, local_files_only=True
             )
             self._model = AutoModelForCausalLM.from_pretrained(
-                model_dir, local_files_only=True, device_map="auto"
+                model_dir,
+                local_files_only=True,
+                device_map="auto",
+                tie_word_embeddings=False,
             )
         else:
             print("모델 다운로드 중... (최초 1회)", flush=True)
             self._tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
             self._model = AutoModelForCausalLM.from_pretrained(
-                MODEL_ID, device_map="auto"
+                MODEL_ID,
+                device_map="auto",
+                tie_word_embeddings=False,
             )
 
             print("모델 로컬 저장 중...", flush=True)
