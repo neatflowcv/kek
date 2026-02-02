@@ -3,7 +3,7 @@ from pathlib import Path
 import typer
 
 from terms import load_terms
-from translator import load_model, translate_with_terms
+from translator import Language, load_model, translate_with_terms
 
 app = typer.Typer()
 
@@ -44,10 +44,10 @@ def main(
 
         print("\n번역 중...")
         ko_protected, en_raw, english = translate_with_terms(
-            model, tokenizer, korean_input, "kor_Hang", "eng_Latn", terms
+            model, tokenizer, korean_input, Language.KOREAN, Language.ENGLISH, terms
         )
         en_protected, ko_raw, korean_back = translate_with_terms(
-            model, tokenizer, english, "eng_Latn", "kor_Hang", terms
+            model, tokenizer, english, Language.ENGLISH, Language.KOREAN, terms
         )
 
         print("\n" + "=" * 50)

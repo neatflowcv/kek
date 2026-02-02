@@ -1,3 +1,4 @@
+from enum import StrEnum
 from pathlib import Path
 
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
@@ -5,6 +6,11 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from terms import protect_terms, restore_terms
 
 MODEL_ID = "facebook/nllb-200-distilled-600M"
+
+
+class Language(StrEnum):
+    KOREAN = "kor_Hang"
+    ENGLISH = "eng_Latn"
 
 
 def load_model(model_dir: Path):
