@@ -29,7 +29,7 @@ def protect_terms(text: str, terms: list[str]) -> tuple[str, dict[str, str]]:
         matches = pattern.findall(protected)
         for match in matches:
             if match not in placeholders.values():
-                placeholder = f"<T{idx}>"
+                placeholder = f"TERM{idx}"
                 placeholders[placeholder] = match
                 protected = protected.replace(match, placeholder, 1)
                 idx += 1
