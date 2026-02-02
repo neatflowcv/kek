@@ -14,10 +14,19 @@ class Translator(ABC):
     def translate(self, text: str, src_lang: Language, tgt_lang: Language) -> str:
         pass
 
-    def translate_with_terms(
-        self, text: str, src_lang: Language, tgt_lang: Language, terms: list[str]
-    ) -> tuple[str, str, str]:
-        protected, placeholders = protect_terms(text, terms)
-        translated = self.translate(protected, src_lang, tgt_lang)
-        restored = restore_terms(translated, placeholders)
-        return protected, translated, restored
+
+class TermProtectedTranslator(Translator):
+    """용어 보호 기능을 추가하는 래퍼"""
+
+    def __init__(self, translator: Translator, terms: list[str]):
+        self._translator = translator
+        self._terms = terms
+        self.last_protected: str | None = None
+        self.last_raw: str | None = None
+
+    def translate(self, text: str, src_lang: Language, tgt_lang: Language) -> str:
+        protected, placeholders = protect_terms(text, self._terms)
+        self.last_protected = protected
+        translated = self._translator.translate(protected, src_lang, tgt_lang)
+        self.last_raw = translated
+        return restore_terms(translated, placeholders)

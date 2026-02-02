@@ -7,7 +7,7 @@ import typer
 from hymt_translator import HYMTTranslator
 from nllb_translator import NLLBTranslator
 from terms import load_terms
-from translator import Language
+from translator import Language, TermProtectedTranslator
 
 app = typer.Typer()
 
@@ -47,9 +47,9 @@ def main(
         model_dir = DEFAULT_MODEL_DIRS[model_type]
 
     if model_type == ModelType.NLLB:
-        translator = NLLBTranslator(model_dir)
+        base_translator = NLLBTranslator(model_dir)
     else:
-        translator = HYMTTranslator(model_dir)
+        base_translator = HYMTTranslator(model_dir)
 
     print("모델 로딩 완료!\n")
 
@@ -61,6 +61,8 @@ def main(
         print(f"용어집 없음 ({terms_file} 파일을 생성하면 전문 용어 보호 가능)")
     print()
 
+    translator = TermProtectedTranslator(base_translator, terms)
+
     while True:
         korean_input = input("한국어 입력 (종료: q): ").strip()
         if korean_input.lower() == "q":
@@ -70,12 +72,13 @@ def main(
             continue
 
         print("\n번역 중...")
-        ko_protected, en_raw, english = translator.translate_with_terms(
-            korean_input, Language.KOREAN, Language.ENGLISH, terms
-        )
-        en_protected, ko_raw, korean_back = translator.translate_with_terms(
-            english, Language.ENGLISH, Language.KOREAN, terms
-        )
+        english = translator.translate(korean_input, Language.KOREAN, Language.ENGLISH)
+        ko_protected = translator.last_protected
+        en_raw = translator.last_raw
+
+        korean_back = translator.translate(english, Language.ENGLISH, Language.KOREAN)
+        en_protected = translator.last_protected
+        ko_raw = translator.last_raw
 
         print("\n" + "=" * 50)
         print(f"원본 한국어: {korean_input}")
