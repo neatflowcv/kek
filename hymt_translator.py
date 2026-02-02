@@ -1,8 +1,13 @@
+import logging
 from pathlib import Path
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from translator import Language, Translator
+
+# HY-MT 모델은 커스텀 YaRN RoPE 파라미터를 사용하지만, transformers의
+# 'dynamic' rope_type은 이를 인식하지 못함. 모델은 자체 구현으로 처리하므로 무시.
+logging.getLogger("transformers.modeling_rope_utils").setLevel(logging.ERROR)
 
 MODEL_ID = "tencent/HY-MT1.5-1.8B"
 
