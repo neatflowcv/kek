@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from enum import StrEnum
 from pathlib import Path
 
@@ -13,7 +14,21 @@ class Language(StrEnum):
     ENGLISH = "eng_Latn"
 
 
-class Translator:
+class Translator(ABC):
+    @abstractmethod
+    def translate(self, text: str, src_lang: Language, tgt_lang: Language) -> str:
+        pass
+
+    def translate_with_terms(
+        self, text: str, src_lang: Language, tgt_lang: Language, terms: list[str]
+    ) -> tuple[str, str, str]:
+        protected, placeholders = protect_terms(text, terms)
+        translated = self.translate(protected, src_lang, tgt_lang)
+        restored = restore_terms(translated, placeholders)
+        return protected, translated, restored
+
+
+class NLLBTranslator(Translator):
     def __init__(self, model_dir: Path):
         if model_dir.exists():
             print("로컬 모델 로딩 중...", flush=True)
@@ -48,11 +63,3 @@ class Translator:
         )
 
         return self._tokenizer.decode(generated[0], skip_special_tokens=True)
-
-    def translate_with_terms(
-        self, text: str, src_lang: Language, tgt_lang: Language, terms: list[str]
-    ) -> tuple[str, str, str]:
-        protected, placeholders = protect_terms(text, terms)
-        translated = self.translate(protected, src_lang, tgt_lang)
-        restored = restore_terms(translated, placeholders)
-        return protected, translated, restored

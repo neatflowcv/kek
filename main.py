@@ -3,7 +3,7 @@ from pathlib import Path
 import typer
 
 from terms import load_terms
-from translator import Language, Translator
+from translator import Language, NLLBTranslator
 
 app = typer.Typer()
 
@@ -23,7 +23,7 @@ def main(
         help="전문 용어 파일 경로",
     ),
 ):
-    translator = Translator(model_dir)
+    translator = NLLBTranslator(model_dir)
     print("모델 로딩 완료!\n")
 
     terms = load_terms(terms_file)
