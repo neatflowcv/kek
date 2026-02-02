@@ -1,9 +1,49 @@
+import re
 from pathlib import Path
 
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 MODEL_ID = "facebook/nllb-200-distilled-600M"
 LOCAL_MODEL_DIR = Path(__file__).parent / "models" / "nllb-200-distilled-600M"
+TERMS_FILE = Path(__file__).parent / "terms.txt"
+
+
+def load_terms() -> list[str]:
+    if not TERMS_FILE.exists():
+        return []
+    terms = []
+    for line in TERMS_FILE.read_text().splitlines():
+        term = line.strip()
+        if term and not term.startswith("#"):
+            terms.append(term)
+    # 긴 용어부터 매칭하도록 정렬
+    return sorted(terms, key=len, reverse=True)
+
+
+def protect_terms(text: str, terms: list[str]) -> tuple[str, dict[str, str]]:
+    """전문 용어를 플레이스홀더로 교체"""
+    placeholders = {}
+    protected = text
+    idx = 0
+    for term in terms:
+        # 대소문자 무시 매칭
+        pattern = re.compile(re.escape(term), re.IGNORECASE)
+        matches = pattern.findall(protected)
+        for match in matches:
+            if match not in placeholders.values():
+                placeholder = f"<T{idx}>"
+                placeholders[placeholder] = match
+                protected = protected.replace(match, placeholder, 1)
+                idx += 1
+    return protected, placeholders
+
+
+def restore_terms(text: str, placeholders: dict[str, str]) -> str:
+    """플레이스홀더를 원래 용어로 복원"""
+    restored = text
+    for placeholder, term in placeholders.items():
+        restored = restored.replace(placeholder, term)
+    return restored
 
 
 def load_model():
@@ -41,9 +81,27 @@ def translate(model, tokenizer, text: str, src_lang: str, tgt_lang: str) -> str:
     return tokenizer.decode(generated[0], skip_special_tokens=True)
 
 
+def translate_with_terms(
+    model, tokenizer, text: str, src_lang: str, tgt_lang: str, terms: list[str]
+) -> str:
+    """전문 용어를 보호하며 번역"""
+    protected, placeholders = protect_terms(text, terms)
+    translated = translate(model, tokenizer, protected, src_lang, tgt_lang)
+    restored = restore_terms(translated, placeholders)
+    return restored
+
+
 def main():
     model, tokenizer = load_model()
     print("모델 로딩 완료!\n")
+
+    terms = load_terms()
+    if terms:
+        print(f"용어집 로드됨: {len(terms)}개 용어")
+        print(f"  예: {terms[:5]}")
+    else:
+        print("용어집 없음 (terms.txt 파일을 생성하면 전문 용어 보호 가능)")
+    print()
 
     while True:
         korean_input = input("한국어 입력 (종료: q): ").strip()
@@ -54,8 +112,12 @@ def main():
             continue
 
         print("\n번역 중...")
-        english = translate(model, tokenizer, korean_input, "kor_Hang", "eng_Latn")
-        korean_back = translate(model, tokenizer, english, "eng_Latn", "kor_Hang")
+        english = translate_with_terms(
+            model, tokenizer, korean_input, "kor_Hang", "eng_Latn", terms
+        )
+        korean_back = translate_with_terms(
+            model, tokenizer, english, "eng_Latn", "kor_Hang", terms
+        )
 
         print("\n" + "=" * 50)
         print(f"원본 한국어: {korean_input}")
