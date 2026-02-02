@@ -7,6 +7,7 @@ code in this repository.
 
 - `__init__.py` 사용 금지
 - `__main__.py` 사용 금지, CLI는 `[project.scripts]` 사용
+- 글로벌 변수 사용 금지
 
 ## Python
 
