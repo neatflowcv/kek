@@ -7,6 +7,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `__init__.py` 사용 금지
 - `__main__.py` 사용 금지, CLI는 `[project.scripts]` 사용
 
+## Commit Convention
+
+형식: `type: 한국어 설명`
+
+타입:
+- `feat`: 새 기능 추가
+- `fix`: 버그 수정
+- `refactor`: 리팩토링
+- `docs`: 문서 변경
+- `chore`: 기타 변경
+
 ## Build and Run
 
 This project uses `uv` as the package manager with Python 3.13.
