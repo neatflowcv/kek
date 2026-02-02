@@ -3,7 +3,8 @@ from pathlib import Path
 import typer
 
 from terms import load_terms
-from translator import Language, NLLBTranslator
+from nllb_translator import NLLBTranslator
+from translator import Language
 
 app = typer.Typer()
 
