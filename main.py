@@ -80,11 +80,11 @@ def translate(model, tokenizer, text: str, src_lang: str, tgt_lang: str) -> str:
 
 def translate_with_terms(
     model, tokenizer, text: str, src_lang: str, tgt_lang: str, terms: list[str]
-) -> str:
+) -> tuple[str, str, str]:
     protected, placeholders = protect_terms(text, terms)
     translated = translate(model, tokenizer, protected, src_lang, tgt_lang)
     restored = restore_terms(translated, placeholders)
-    return restored
+    return protected, translated, restored
 
 
 @app.command()
@@ -122,16 +122,20 @@ def main(
             continue
 
         print("\n번역 중...")
-        english = translate_with_terms(
+        ko_protected, en_raw, english = translate_with_terms(
             model, tokenizer, korean_input, "kor_Hang", "eng_Latn", terms
         )
-        korean_back = translate_with_terms(
+        en_protected, ko_raw, korean_back = translate_with_terms(
             model, tokenizer, english, "eng_Latn", "kor_Hang", terms
         )
 
         print("\n" + "=" * 50)
         print(f"원본 한국어: {korean_input}")
+        print(f"  → 플레이스홀더: {ko_protected}")
+        print(f"  → 번역 결과(raw): {en_raw}")
         print(f"번역된 영어: {english}")
+        print(f"  → 플레이스홀더: {en_protected}")
+        print(f"  → 번역 결과(raw): {ko_raw}")
         print(f"재번역 한국어: {korean_back}")
         print("=" * 50 + "\n")
 
