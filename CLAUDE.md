@@ -8,6 +8,12 @@ code in this repository.
 - `__init__.py` 사용 금지
 - `__main__.py` 사용 금지, CLI는 `[project.scripts]` 사용
 
+## Python
+
+린팅/포맷팅: `uvx ruff check --fix && uvx ruff format`
+
+Python 코드 수정 후 반드시 통과해야 함.
+
 ## Markdown
 
 포맷팅: `bunx -bun markdownlint-cli2 --fix "*.md" "docs/**/*.md"`
