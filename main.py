@@ -3,7 +3,7 @@ from pathlib import Path
 import typer
 
 from terms import load_terms
-from translator import Language, load_model, translate_with_terms
+from translator import Language, Translator
 
 app = typer.Typer()
 
@@ -23,7 +23,7 @@ def main(
         help="전문 용어 파일 경로",
     ),
 ):
-    model, tokenizer = load_model(model_dir)
+    translator = Translator(model_dir)
     print("모델 로딩 완료!\n")
 
     terms = load_terms(terms_file)
@@ -43,11 +43,11 @@ def main(
             continue
 
         print("\n번역 중...")
-        ko_protected, en_raw, english = translate_with_terms(
-            model, tokenizer, korean_input, Language.KOREAN, Language.ENGLISH, terms
+        ko_protected, en_raw, english = translator.translate_with_terms(
+            korean_input, Language.KOREAN, Language.ENGLISH, terms
         )
-        en_protected, ko_raw, korean_back = translate_with_terms(
-            model, tokenizer, english, Language.ENGLISH, Language.KOREAN, terms
+        en_protected, ko_raw, korean_back = translator.translate_with_terms(
+            english, Language.ENGLISH, Language.KOREAN, terms
         )
 
         print("\n" + "=" * 50)
