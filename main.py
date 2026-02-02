@@ -1,32 +1,30 @@
 import re
 from pathlib import Path
 
+import typer
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 MODEL_ID = "facebook/nllb-200-distilled-600M"
-LOCAL_MODEL_DIR = Path(__file__).parent / "models" / "nllb-200-distilled-600M"
-TERMS_FILE = Path(__file__).parent / "terms.txt"
+
+app = typer.Typer()
 
 
-def load_terms() -> list[str]:
-    if not TERMS_FILE.exists():
+def load_terms(terms_file: Path) -> list[str]:
+    if not terms_file.exists():
         return []
     terms = []
-    for line in TERMS_FILE.read_text().splitlines():
+    for line in terms_file.read_text().splitlines():
         term = line.strip()
         if term and not term.startswith("#"):
             terms.append(term)
-    # 긴 용어부터 매칭하도록 정렬
     return sorted(terms, key=len, reverse=True)
 
 
 def protect_terms(text: str, terms: list[str]) -> tuple[str, dict[str, str]]:
-    """전문 용어를 플레이스홀더로 교체"""
     placeholders = {}
     protected = text
     idx = 0
     for term in terms:
-        # 대소문자 무시 매칭
         pattern = re.compile(re.escape(term), re.IGNORECASE)
         matches = pattern.findall(protected)
         for match in matches:
@@ -39,19 +37,18 @@ def protect_terms(text: str, terms: list[str]) -> tuple[str, dict[str, str]]:
 
 
 def restore_terms(text: str, placeholders: dict[str, str]) -> str:
-    """플레이스홀더를 원래 용어로 복원"""
     restored = text
     for placeholder, term in placeholders.items():
         restored = restored.replace(placeholder, term)
     return restored
 
 
-def load_model():
-    if LOCAL_MODEL_DIR.exists():
+def load_model(model_dir: Path):
+    if model_dir.exists():
         print("로컬 모델 로딩 중...", flush=True)
-        tokenizer = AutoTokenizer.from_pretrained(LOCAL_MODEL_DIR, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
         model = AutoModelForSeq2SeqLM.from_pretrained(
-            LOCAL_MODEL_DIR, local_files_only=True, device_map="auto"
+            model_dir, local_files_only=True, device_map="auto"
         )
     else:
         print("모델 다운로드 중... (최초 1회)", flush=True)
@@ -59,9 +56,9 @@ def load_model():
         model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_ID, device_map="auto")
 
         print("모델 로컬 저장 중...", flush=True)
-        LOCAL_MODEL_DIR.mkdir(parents=True, exist_ok=True)
-        tokenizer.save_pretrained(LOCAL_MODEL_DIR)
-        model.save_pretrained(LOCAL_MODEL_DIR)
+        model_dir.mkdir(parents=True, exist_ok=True)
+        tokenizer.save_pretrained(model_dir)
+        model.save_pretrained(model_dir)
 
     return model, tokenizer
 
@@ -84,23 +81,36 @@ def translate(model, tokenizer, text: str, src_lang: str, tgt_lang: str) -> str:
 def translate_with_terms(
     model, tokenizer, text: str, src_lang: str, tgt_lang: str, terms: list[str]
 ) -> str:
-    """전문 용어를 보호하며 번역"""
     protected, placeholders = protect_terms(text, terms)
     translated = translate(model, tokenizer, protected, src_lang, tgt_lang)
     restored = restore_terms(translated, placeholders)
     return restored
 
 
-def main():
-    model, tokenizer = load_model()
+@app.command()
+def main(
+    model_dir: Path = typer.Option(
+        Path("./models/nllb-200-distilled-600M"),
+        "--model-dir",
+        "-m",
+        help="모델 저장 디렉토리",
+    ),
+    terms_file: Path = typer.Option(
+        Path("./terms.txt"),
+        "--terms",
+        "-t",
+        help="전문 용어 파일 경로",
+    ),
+):
+    model, tokenizer = load_model(model_dir)
     print("모델 로딩 완료!\n")
 
-    terms = load_terms()
+    terms = load_terms(terms_file)
     if terms:
         print(f"용어집 로드됨: {len(terms)}개 용어")
         print(f"  예: {terms[:5]}")
     else:
-        print("용어집 없음 (terms.txt 파일을 생성하면 전문 용어 보호 가능)")
+        print(f"용어집 없음 ({terms_file} 파일을 생성하면 전문 용어 보호 가능)")
     print()
 
     while True:
@@ -127,4 +137,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    app()
