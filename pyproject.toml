@@ -10,4 +10,8 @@ dependencies = [
     "accelerate",
     "sentencepiece",
     "typer",
+    "litestar[standard]",
 ]
+
+[project.scripts]
+kek-api = "api:run"
